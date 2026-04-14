@@ -340,7 +340,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
 
       <hr style={{ borderColor: 'var(--panel-border)', margin: '8px 0' }} />
 
-      <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+      <div style={{ marginTop: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h2 style={{ margin: 0 }}>Palette Library</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -354,16 +354,16 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
             Upload an image above to start building your palette.
           </div>
         ) : (
-          <div className="palette-grid" style={{ overflowY: 'auto', paddingRight: '4px' }}>
+          <div className="palette-grid" style={{ paddingRight: '4px', width: '100%' }}>
             {palette.map((item, index) => (
               <div 
                 key={item.id} 
                 className={`palette-item ${activePaletteIndex === index ? 'active' : ''}`}
                 onClick={() => setActivePaletteIndex(index === activePaletteIndex ? null : index)}
               >
-                <div style={{ position: 'relative', width: '100%', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                  <div style={{ position: 'relative', width: item.width || 60, height: item.height || 60, transform: `scale(${Math.min(60 / (item.width || 60), 60 / (item.height || 60))})` }}>
-                    <img src={item.imageSrc} alt={item.name} style={{ width: '100%', height: '100%', display: 'block' }} />
+                <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', width: item.width || 64, height: item.height || 64, transform: `translate(-50%, -50%) scale(${Math.min(64 / (item.width || 64), 64 / (item.height || 64))})` }}>
+                    <img src={item.imageSrc} alt={item.name} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }} />
                     {item.type === 'tile' && item.assignedNumber !== undefined && (
                       <img src={`/tilesmap/${item.assignedNumber}.png`} alt={`Number ${item.assignedNumber}`} style={{ position: 'absolute', top: item.numberOffsetY || 0, left: item.numberOffsetX || 0, width: 'auto', height: 'auto', zIndex: 1, pointerEvents: 'none', maxWidth: 'none', maxHeight: 'none' }} />
                     )}
