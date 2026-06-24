@@ -3,6 +3,7 @@ import './index.css';
 import type { PaletteObject, MapObject, EditorTool } from './types';
 import PaletteSidebar from './components/PaletteSidebar';
 import MapEditor from './components/MapEditor';
+import TopMenu from './components/TopMenu';
 
 function App() {
   const [palette, setPalette] = useState<PaletteObject[]>([]);
@@ -115,20 +116,70 @@ function App() {
     }
   };
 
+  const handleSavePalette = useCallback(() => {
+    const blob = new Blob([JSON.stringify(palette, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'palette.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [palette]);
+
+  const handleLoadPaletteFile = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const loaded = JSON.parse(ev.target?.result as string);
+          if (Array.isArray(loaded)) {
+            setPalette(prev => {
+              const existingIds = new Set(prev.map(p => p.id));
+              const newItems = loaded.filter(p => p.id && !existingIds.has(p.id)); // basic validation
+              return [...prev, ...newItems];
+            });
+          }
+        } catch (err) {
+          console.error("Failed to load palette JSON", err);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+  }, []);
+
+  const handleNewMap = useCallback(() => {
+    setMapObjects([]);
+  }, []);
+
+  const handleEmptyPalette = useCallback(() => {
+    setPalette([]);
+  }, []);
+
   return (
-    <div className="app-container">
-      <PaletteSidebar
-        palette={palette}
-        setPalette={setPalette}
-        activePaletteIndex={activePaletteIndex}
-        setActivePaletteIndex={handlePaletteSelect}
-        mapWidth={mapWidth}
-        setMapWidth={setMapWidth}
-        mapHeight={mapHeight}
-        setMapHeight={setMapHeight}
-        onExportJSON={handleExportJSON}
-        onImportJSON={handleImportMapFiles}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <TopMenu
+        onNewMap={handleNewMap}
+        onImportMap={handleImportMapFiles}
+        onExportMap={handleExportJSON}
+        onImportPalette={handleLoadPaletteFile}
+        onExportPalette={handleSavePalette}
+        onEmptyPalette={handleEmptyPalette}
       />
+      <div className="app-container" style={{ flex: 1, minHeight: 0, height: 'auto' }}>
+        <PaletteSidebar
+          palette={palette}
+          setPalette={setPalette}
+          activePaletteIndex={activePaletteIndex}
+          setActivePaletteIndex={handlePaletteSelect}
+          mapWidth={mapWidth}
+          setMapWidth={setMapWidth}
+          mapHeight={mapHeight}
+          setMapHeight={setMapHeight}
+        />
       
       <MapEditor
         mapWidth={mapWidth}
@@ -143,6 +194,7 @@ function App() {
         activeTool={activeTool}
         setActiveTool={setActiveTool}
       />
+      </div>
     </div>
   );
 }

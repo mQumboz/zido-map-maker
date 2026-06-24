@@ -11,8 +11,6 @@ interface PaletteSidebarProps {
   setMapWidth: React.Dispatch<React.SetStateAction<number>>;
   mapHeight: number;
   setMapHeight: React.Dispatch<React.SetStateAction<number>>;
-  onExportJSON: () => void;
-  onImportJSON: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
@@ -23,13 +21,9 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   mapWidth,
   setMapWidth,
   mapHeight,
-  setMapHeight,
-  onExportJSON,
-  onImportJSON
+  setMapHeight
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const loadFileRef = useRef<HTMLInputElement>(null);
-  const loadMapFileRef = useRef<HTMLInputElement>(null);
   
   const [newObjectName, setNewObjectName] = useState('');
   const [newObjectType, setNewObjectType] = useState<ObjectType>('prop');
@@ -108,40 +102,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
     setNewOffsetY(0);
   };
 
-  const handleSavePalette = () => {
-    const blob = new Blob([JSON.stringify(palette, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'palette.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
-  const handleLoadPaletteFile = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const loaded = JSON.parse(ev.target?.result as string);
-          if (Array.isArray(loaded)) {
-            setPalette(prev => {
-              const existingIds = new Set(prev.map(p => p.id));
-              const newItems = loaded.filter(p => p.id && !existingIds.has(p.id)); // basic validation
-              return [...prev, ...newItems];
-            });
-          }
-        } catch (err) {
-          console.error("Failed to load palette JSON", err);
-        }
-      };
-      reader.readAsText(file);
-      e.target.value = '';
-    }
-  };
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -172,8 +133,8 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   return (
     <div className="sidebar glass-panel">
       <div>
-        <h2>Map Settings</h2>
-        <div className="form-group" style={{ flexDirection: 'row', gap: '12px' }}>
+        <h2>Map Dimensions</h2>
+        <div className="form-group" style={{ flexDirection: 'row', gap: '12px', marginBottom: 0 }}>
           <div style={{ flex: 1 }}>
             <label>Width (px)</label>
             <input 
@@ -195,11 +156,6 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
             />
           </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-          <button className="btn-secondary" style={{ flex: 1 }} onClick={() => loadMapFileRef.current?.click()}>Import JSON</button>
-          <button className="btn-secondary" style={{ flex: 1 }} onClick={onExportJSON}>Export JSON</button>
-        </div>
-        <input type="file" ref={loadMapFileRef} style={{ display: 'none' }} accept="application/json" onChange={onImportJSON} />
       </div>
 
       <hr style={{ borderColor: 'var(--panel-border)', margin: '8px 0' }} />
@@ -343,11 +299,6 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
       <div style={{ marginTop: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h2 style={{ margin: 0 }}>Palette Library</h2>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', width: 'auto' }} onClick={() => loadFileRef.current?.click()} title="Load Palette">📂 Load</button>
-            <button className="btn-secondary" style={{ padding: '4px 8px', fontSize: '0.75rem', width: 'auto' }} onClick={handleSavePalette} title="Save Palette">💾 Save</button>
-            <input type="file" ref={loadFileRef} style={{ display: 'none' }} accept="application/json" onChange={handleLoadPaletteFile} />
-          </div>
         </div>
         {palette.length === 0 ? (
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center', marginTop: '20px' }}>

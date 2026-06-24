@@ -390,3 +390,20 @@ input, select {
   font-family: monospace;
   color: #fbbf24;
 }
+
+/* Top Menu */
+.top-menu .menu-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+  background: var(--accent-color);
+  color: white;
+}
