@@ -322,8 +322,8 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
             <PaletteGrid 
               palette={palette} 
               activePaletteIndex={activePaletteIndex} 
-              onItemSelect={(item, index) => setActivePaletteIndex(index === activePaletteIndex ? null : index)} 
-              onContextMenu={(e, item, index) => {
+              onItemSelect={(_, index) => setActivePaletteIndex(index === activePaletteIndex ? null : index)} 
+              onContextMenu={(e, _, index) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setPaletteContextMenu({ x: e.clientX, y: e.clientY, index });
