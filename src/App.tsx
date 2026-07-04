@@ -29,17 +29,23 @@ function App() {
     const usedPaletteIds = new Set(mapObjects.map(obj => obj.paletteObjectId));
     const exportedPalette = palette
       .filter(p => usedPaletteIds.has(p.id))
-      .map(p => ({
-        id: p.id,
-        name: p.name,
-        type: p.type,
-        width: p.width,
-        height: p.height,
-        imageSrc: p.imageSrc,
-        assignedNumber: p.assignedNumber,
-        numberOffsetX: p.numberOffsetX,
-        numberOffsetY: p.numberOffsetY
-      }));
+      .map(p => {
+        const entry: Record<string, unknown> = {
+          id: p.id,
+          name: p.name,
+          type: p.type,
+          width: p.width,
+          height: p.height,
+          imageSrc: p.imageSrc,
+        };
+        // Tile-only fields — only include when present on tile palette items
+        if (p.type === 'tile') {
+          if (p.assignedNumber != null) entry.assignedNumber = p.assignedNumber;
+          if (p.numberOffsetX != null) entry.numberOffsetX = p.numberOffsetX;
+          if (p.numberOffsetY != null) entry.numberOffsetY = p.numberOffsetY;
+        }
+        return entry;
+      });
 
     const data = {
       width: mapWidth,
