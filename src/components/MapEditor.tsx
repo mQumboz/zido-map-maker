@@ -1,12 +1,14 @@
 import React, { useRef, useState, useEffect } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import type { MapObject, PaletteObject, EditorTool } from '../types';
+import PaletteGrid from './PaletteGrid';
 
 interface MapEditorProps {
   mapWidth: number;
   mapHeight: number;
   mapObjects: MapObject[];
   setMapObjects: React.Dispatch<React.SetStateAction<MapObject[]>>;
+  palette: PaletteObject[];
   activePaletteObject: PaletteObject | null;
   selectedObjectId: string | null;
   setSelectedObjectId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -21,6 +23,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
   mapHeight,
   mapObjects,
   setMapObjects,
+  palette,
   activePaletteObject,
   selectedObjectId,
   setSelectedObjectId,
@@ -39,6 +42,17 @@ const MapEditor: React.FC<MapEditorProps> = ({
   // Pan states
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+
+  // Context Menu and Modal states
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, objectId: string } | null>(null);
+  const [changeObjectModal, setChangeObjectModal] = useState<{ objectId: string } | null>(null);
+
+  // Clear context menu on outside click
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Handle map interaction
   const handleMapMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
@@ -128,6 +142,15 @@ const MapEditor: React.FC<MapEditorProps> = ({
         x: mouseX - targetObj.x,
         y: mouseY - targetObj.y
       });
+    }
+  };
+
+  const handleContextMenu = (e: ReactMouseEvent<HTMLDivElement>, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (activeTool === 'select') {
+      setSelectedObjectId(id);
+      setContextMenu({ x: e.clientX, y: e.clientY, objectId: id });
     }
   };
 
@@ -284,6 +307,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
               key={obj.id}
               className={`map-object ${selectedObjectId === obj.id ? 'selected' : ''}`}
               onMouseDown={(e) => handleObjectMouseDown(e, obj.id)}
+              onContextMenu={(e) => handleContextMenu(e, obj.id)}
               style={{
                 left: obj.x,
                 top: obj.y,
@@ -389,6 +413,81 @@ const MapEditor: React.FC<MapEditorProps> = ({
           </div>
         </div>
       )}
+
+      {contextMenu && (
+        <div 
+          className="context-menu glass-panel" 
+          style={{ position: 'fixed', left: contextMenu.x, top: contextMenu.y, zIndex: 1000, display: 'flex', flexDirection: 'column', padding: '8px', minWidth: '180px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="dropdown-item" onClick={() => { setChangeObjectModal({ objectId: contextMenu.objectId }); setContextMenu(null); }}>Change...</div>
+          <div style={{ height: '1px', background: 'var(--panel-border)', margin: '4px 0' }}></div>
+          <div className="dropdown-item" onClick={() => {
+            setMapObjects(prev => prev.map(o => o.id === contextMenu.objectId ? { ...o, zIndex: o.zIndex + 1 } : o));
+            setContextMenu(null);
+          }}>Move Up (Z-Index)</div>
+          <div className="dropdown-item" onClick={() => {
+            setMapObjects(prev => prev.map(o => o.id === contextMenu.objectId ? { ...o, zIndex: o.zIndex - 1 } : o));
+            setContextMenu(null);
+          }}>Move Down (Z-Index)</div>
+          <div className="dropdown-item" onClick={() => {
+            const maxZ = Math.max(...mapObjects.map(o => o.zIndex), 0);
+            setMapObjects(prev => prev.map(o => o.id === contextMenu.objectId ? { ...o, zIndex: maxZ + 1 } : o));
+            setContextMenu(null);
+          }}>Bring to Front</div>
+          <div className="dropdown-item" onClick={() => {
+            const minZ = Math.min(...mapObjects.map(o => o.zIndex), 0);
+            setMapObjects(prev => prev.map(o => o.id === contextMenu.objectId ? { ...o, zIndex: minZ - 1 } : o));
+            setContextMenu(null);
+          }}>Send to Back</div>
+          <div style={{ height: '1px', background: 'var(--panel-border)', margin: '4px 0' }}></div>
+          <div className="dropdown-item" style={{ color: 'var(--danger-color)' }} onClick={() => {
+            setMapObjects(prev => prev.filter(o => o.id !== contextMenu.objectId));
+            if (selectedObjectId === contextMenu.objectId) setSelectedObjectId(null);
+            setContextMenu(null);
+          }}>Delete</div>
+        </div>
+      )}
+
+      {changeObjectModal && (() => {
+        const targetObj = mapObjects.find(o => o.id === changeObjectModal.objectId);
+        if (!targetObj) return null;
+        const compatiblePaletteObjects = palette.filter(p => p.type === targetObj.type);
+
+        return (
+          <div className="modal-overlay" onClick={() => setChangeObjectModal(null)}>
+            <div className="modal-content glass-panel" onClick={e => e.stopPropagation()}>
+              <h2 style={{ marginBottom: '16px' }}>Change Object</h2>
+              <div style={{ flex: 1, overflowY: 'auto', maxHeight: '60vh' }}>
+                <PaletteGrid 
+                  palette={compatiblePaletteObjects}
+                  onItemSelect={(p) => {
+                    setMapObjects(prev => prev.map(o => {
+                      if (o.id === targetObj.id) {
+                        return {
+                          ...o,
+                          paletteObjectId: p.id,
+                          name: p.name,
+                          type: p.type,
+                          imageSrc: p.imageSrc,
+                          width: p.width,
+                          height: p.height,
+                          assignedNumber: p.assignedNumber,
+                          numberOffsetX: p.numberOffsetX,
+                          numberOffsetY: p.numberOffsetY,
+                        };
+                      }
+                      return o;
+                    }));
+                    setChangeObjectModal(null);
+                  }}
+                />
+              </div>
+              <button className="btn-secondary" style={{ marginTop: '16px' }} onClick={() => setChangeObjectModal(null)}>Cancel</button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

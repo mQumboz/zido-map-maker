@@ -192,6 +192,7 @@ function App() {
         mapHeight={mapHeight}
         mapObjects={mapObjects}
         setMapObjects={setMapObjects}
+        palette={palette}
         activePaletteObject={activePaletteIndex !== null ? palette[activePaletteIndex] : null}
         selectedObjectId={selectedObjectId}
         setSelectedObjectId={setSelectedObjectId}
