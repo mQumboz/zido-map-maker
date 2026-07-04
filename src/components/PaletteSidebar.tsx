@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
 import type { ObjectType, PaletteObject } from '../types';
 import PaletteGrid from './PaletteGrid';
+import EditPaletteModal from './EditPaletteModal';
 
 interface PaletteSidebarProps {
   palette: PaletteObject[];
@@ -37,6 +39,16 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   const [imageDims, setImageDims] = useState<{w: number, h: number} | null>(null);
 
   const [isDragging, setIsDragging] = useState(false);
+
+  const [paletteContextMenu, setPaletteContextMenu] = useState<{ x: number, y: number, index: number } | null>(null);
+  const [editItemModal, setEditItemModal] = useState<number | null>(null);
+
+  // Clear context menu on outside click
+  React.useEffect(() => {
+    const handleClickOutside = () => setPaletteContextMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -311,10 +323,51 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
               palette={palette} 
               activePaletteIndex={activePaletteIndex} 
               onItemSelect={(item, index) => setActivePaletteIndex(index === activePaletteIndex ? null : index)} 
+              onContextMenu={(e, item, index) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPaletteContextMenu({ x: e.clientX, y: e.clientY, index });
+              }}
             />
           </div>
         )}
       </div>
+
+      {paletteContextMenu && createPortal(
+        <div 
+          className="context-menu glass-panel" 
+          style={{ position: 'fixed', left: paletteContextMenu.x, top: paletteContextMenu.y, zIndex: 1000, display: 'flex', flexDirection: 'column', padding: '8px', minWidth: '150px' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="dropdown-item" onClick={() => { setEditItemModal(paletteContextMenu.index); setPaletteContextMenu(null); }}>Edit</div>
+          <div style={{ height: '1px', background: 'var(--panel-border)', margin: '4px 0' }}></div>
+          <div className="dropdown-item" style={{ color: 'var(--danger-color)' }} onClick={() => {
+            setPalette(prev => prev.filter((_, i) => i !== paletteContextMenu.index));
+            if (activePaletteIndex === paletteContextMenu.index) setActivePaletteIndex(null);
+            else if (activePaletteIndex !== null && activePaletteIndex > paletteContextMenu.index) {
+              setActivePaletteIndex(activePaletteIndex - 1);
+            }
+            setPaletteContextMenu(null);
+          }}>Remove</div>
+        </div>,
+        document.body
+      )}
+
+      {editItemModal !== null && palette[editItemModal] && createPortal(
+        <EditPaletteModal
+          item={palette[editItemModal]}
+          onSave={(updatedItem) => {
+            setPalette(prev => {
+              const newPalette = [...prev];
+              newPalette[editItemModal] = updatedItem;
+              return newPalette;
+            });
+            setEditItemModal(null);
+          }}
+          onCancel={() => setEditItemModal(null)}
+        />,
+        document.body
+      )}
     </div>
   );
 };

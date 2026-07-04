@@ -5,12 +5,14 @@ interface PaletteGridProps {
   palette: PaletteObject[];
   activePaletteIndex?: number | null;
   onItemSelect?: (item: PaletteObject, index: number) => void;
+  onContextMenu?: (e: React.MouseEvent, item: PaletteObject, index: number) => void;
 }
 
 const PaletteGrid: React.FC<PaletteGridProps> = ({
   palette,
   activePaletteIndex = null,
-  onItemSelect
+  onItemSelect,
+  onContextMenu
 }) => {
   return (
     <div className="palette-grid" style={{ paddingRight: '4px', width: '100%' }}>
@@ -19,6 +21,7 @@ const PaletteGrid: React.FC<PaletteGridProps> = ({
           key={item.id} 
           className={`palette-item ${activePaletteIndex === index ? 'active' : ''}`}
           onClick={() => onItemSelect && onItemSelect(item, index)}
+          onContextMenu={(e) => onContextMenu && onContextMenu(e, item, index)}
         >
           <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: '50%', left: '50%', width: item.width || 64, height: item.height || 64, transform: `translate(-50%, -50%) scale(${Math.min(64 / (item.width || 64), 64 / (item.height || 64))})` }}>
