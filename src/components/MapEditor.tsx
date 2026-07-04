@@ -452,7 +452,6 @@ const MapEditor: React.FC<MapEditorProps> = ({
       {changeObjectModal && (() => {
         const targetObj = mapObjects.find(o => o.id === changeObjectModal.objectId);
         if (!targetObj) return null;
-        const compatiblePaletteObjects = palette.filter(p => p.type === targetObj.type);
 
         return (
           <div className="modal-overlay" onClick={() => setChangeObjectModal(null)}>
@@ -460,7 +459,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
               <h2 style={{ marginBottom: '16px' }}>Change Object</h2>
               <div style={{ flex: 1, overflowY: 'auto', maxHeight: '60vh' }}>
                 <PaletteGrid 
-                  palette={compatiblePaletteObjects}
+                  palette={palette}
                   onItemSelect={(p) => {
                     setMapObjects(prev => prev.map(o => {
                       if (o.id === targetObj.id) {

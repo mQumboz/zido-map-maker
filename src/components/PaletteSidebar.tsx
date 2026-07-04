@@ -340,6 +340,18 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="dropdown-item" onClick={() => { setEditItemModal(paletteContextMenu.index); setPaletteContextMenu(null); }}>Edit</div>
+          <div className="dropdown-item" onClick={() => {
+            const item = palette[paletteContextMenu.index];
+            if (item && item.imageSrc) {
+              const a = document.createElement('a');
+              a.href = item.imageSrc;
+              a.download = `${item.name}.png`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+            }
+            setPaletteContextMenu(null);
+          }}>Download PNG</div>
           <div style={{ height: '1px', background: 'var(--panel-border)', margin: '4px 0' }}></div>
           <div className="dropdown-item" style={{ color: 'var(--danger-color)' }} onClick={() => {
             setPalette(prev => prev.filter((_, i) => i !== paletteContextMenu.index));
