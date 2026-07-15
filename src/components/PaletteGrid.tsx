@@ -29,6 +29,13 @@ const PaletteGrid: React.FC<PaletteGridProps> = ({
               {item.type === 'tile' && item.assignedNumber !== undefined && (
                 <img src={`/tilesmap/${item.assignedNumber}.png`} alt={`Number ${item.assignedNumber}`} style={{ position: 'absolute', top: item.numberOffsetY || 0, left: item.numberOffsetX || 0, width: 'auto', height: 'auto', zIndex: 1, pointerEvents: 'none', maxWidth: 'none', maxHeight: 'none' }} />
               )}
+              {item.type === 'tile' && item.enableSvgOutline && item.svgOutline && (
+                <svg
+                  viewBox={`0 0 ${item.width || 64} ${item.height || 64}`}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
+                  dangerouslySetInnerHTML={{ __html: item.svgOutline }}
+                />
+              )}
             </div>
           </div>
           <div className="palette-item-name">{item.name}</div>

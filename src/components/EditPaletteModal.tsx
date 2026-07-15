@@ -17,6 +17,8 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
   const [objectNumber, setObjectNumber] = useState<number>(item.assignedNumber ?? 1);
   const [offsetX, setOffsetX] = useState<number>(item.numberOffsetX ?? 0);
   const [offsetY, setOffsetY] = useState<number>(item.numberOffsetY ?? 0);
+  const [enableSvgOutline, setEnableSvgOutline] = useState(item.enableSvgOutline ?? false);
+  const [svgOutline, setSvgOutline] = useState(item.svgOutline ?? '');
 
   const [imageSrc, setImageSrc] = useState<string>(item.imageSrc);
   const [imageDims, setImageDims] = useState<{w: number, h: number}>({ w: item.width, h: item.height });
@@ -105,6 +107,14 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
       delete updatedObj.numberOffsetY;
     }
 
+    if (objectType === 'tile' && enableSvgOutline) {
+      updatedObj.enableSvgOutline = true;
+      updatedObj.svgOutline = svgOutline;
+    } else {
+      delete updatedObj.enableSvgOutline;
+      delete updatedObj.svgOutline;
+    }
+
     onSave(updatedObj);
   };
 
@@ -122,6 +132,7 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
               setObjectType(e.target.value as ObjectType);
               if (e.target.value !== 'tile') {
                 setHasNumber(false);
+                setEnableSvgOutline(false);
               }
             }}
           >
@@ -181,6 +192,32 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
           </>
         )}
 
+        {objectType === 'tile' && (
+          <>
+            <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', marginTop: '8px' }}>
+              <input 
+                type="checkbox" 
+                checked={enableSvgOutline}
+                onChange={e => setEnableSvgOutline(e.target.checked)}
+                style={{ marginRight: '8px' }}
+              />
+              <label style={{ margin: 0 }}>Enable SVG Outline</label>
+            </div>
+            {enableSvgOutline && (
+              <div className="form-group">
+                <label>SVG Path (Code Snippet)</label>
+                <textarea 
+                  className="input-field" 
+                  value={svgOutline}
+                  onChange={e => setSvgOutline(e.target.value)}
+                  placeholder='e.g. <path d="M10 10 H 90 V 90 H 10 L 10 10"/>'
+                  style={{ minHeight: '80px', fontFamily: 'monospace', resize: 'vertical' }}
+                />
+              </div>
+            )}
+          </>
+        )}
+
         <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '8px', display: 'block' }}>
           Image Asset
         </label>
@@ -229,6 +266,13 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
                  <img src={imageSrc} style={{ width: '100%', height: '100%', display: 'block' }} alt="Preview" />
                  {objectType === 'tile' && hasNumber && (
                    <img src={`/tilesmap/${objectNumber}.png`} style={{ position: 'absolute', top: offsetY, left: offsetX, width: 'auto', height: 'auto', pointerEvents: 'none', zIndex: 1, maxWidth: 'none', maxHeight: 'none' }} alt="Num" />
+                 )}
+                 {objectType === 'tile' && enableSvgOutline && svgOutline && (
+                   <svg
+                     viewBox={`0 0 ${imageDims.w} ${imageDims.h}`}
+                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
+                     dangerouslySetInnerHTML={{ __html: svgOutline }}
+                   />
                  )}
               </div>
             </div>

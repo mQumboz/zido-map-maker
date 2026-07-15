@@ -34,6 +34,8 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   const [newObjectNumber, setNewObjectNumber] = useState<number>(1);
   const [newOffsetX, setNewOffsetX] = useState<number>(0);
   const [newOffsetY, setNewOffsetY] = useState<number>(0);
+  const [enableSvgOutline, setEnableSvgOutline] = useState(false);
+  const [svgOutline, setSvgOutline] = useState('');
   
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageDims, setImageDims] = useState<{w: number, h: number} | null>(null);
@@ -103,6 +105,11 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
       newObj.numberOffsetY = newOffsetY;
     }
 
+    if (newObjectType === 'tile' && enableSvgOutline) {
+      newObj.enableSvgOutline = true;
+      newObj.svgOutline = svgOutline;
+    }
+
     setPalette(prev => [...prev, newObj]);
     
     // Reset form
@@ -113,6 +120,8 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
     setNewObjectNumber(1);
     setNewOffsetX(0);
     setNewOffsetY(0);
+    setEnableSvgOutline(false);
+    setSvgOutline('');
   };
 
 
@@ -184,6 +193,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
               setNewObjectType(e.target.value as ObjectType);
               if (e.target.value !== 'tile') {
                 setHasNumber(false);
+                setEnableSvgOutline(false);
               }
             }}
           >
@@ -243,6 +253,32 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
           </>
         )}
 
+        {newObjectType === 'tile' && (
+          <>
+            <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', marginTop: '8px' }}>
+              <input 
+                type="checkbox" 
+                checked={enableSvgOutline}
+                onChange={e => setEnableSvgOutline(e.target.checked)}
+                style={{ marginRight: '8px' }}
+              />
+              <label style={{ margin: 0 }}>Enable SVG Outline</label>
+            </div>
+            {enableSvgOutline && (
+              <div className="form-group">
+                <label>SVG Path (Code Snippet)</label>
+                <textarea 
+                  className="input-field" 
+                  value={svgOutline}
+                  onChange={e => setSvgOutline(e.target.value)}
+                  placeholder='e.g. <path d="M10 10 H 90 V 90 H 10 L 10 10"/>'
+                  style={{ minHeight: '80px', fontFamily: 'monospace', resize: 'vertical' }}
+                />
+              </div>
+            )}
+          </>
+        )}
+
         <label style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '8px', display: 'block' }}>
           Image Asset
         </label>
@@ -291,6 +327,13 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
                  <img src={imageSrc} style={{ width: '100%', height: '100%', display: 'block' }} alt="Preview" />
                  {newObjectType === 'tile' && hasNumber && (
                    <img src={`/tilesmap/${newObjectNumber}.png`} style={{ position: 'absolute', top: newOffsetY, left: newOffsetX, width: 'auto', height: 'auto', pointerEvents: 'none', zIndex: 1, maxWidth: 'none', maxHeight: 'none' }} alt="Num" />
+                 )}
+                 {newObjectType === 'tile' && enableSvgOutline && svgOutline && (
+                   <svg
+                     viewBox={`0 0 ${imageDims.w} ${imageDims.h}`}
+                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
+                     dangerouslySetInnerHTML={{ __html: svgOutline }}
+                   />
                  )}
               </div>
             </div>

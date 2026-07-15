@@ -87,6 +87,8 @@ const MapEditor: React.FC<MapEditorProps> = ({
             assignedNumber: activePaletteObject.assignedNumber,
             numberOffsetX: activePaletteObject.numberOffsetX,
             numberOffsetY: activePaletteObject.numberOffsetY,
+            enableSvgOutline: activePaletteObject.enableSvgOutline,
+            svgOutline: activePaletteObject.svgOutline,
             width: activePaletteObject.width,
             height: activePaletteObject.height,
             x: Math.round(x - activePaletteObject.width / 2),
@@ -321,6 +323,13 @@ const MapEditor: React.FC<MapEditorProps> = ({
               {obj.type === 'tile' && obj.assignedNumber !== undefined && (
                  <img src={`/tilesmap/${obj.assignedNumber}.png`} alt={`Number`} style={{ position: 'absolute', top: obj.numberOffsetY || 0, left: obj.numberOffsetX || 0, width: 'auto', height: 'auto', zIndex: 1, pointerEvents: 'none', maxWidth: 'none', maxHeight: 'none' }} />
               )}
+              {obj.type === 'tile' && obj.enableSvgOutline && obj.svgOutline && (
+                <svg
+                  viewBox={`0 0 ${obj.width} ${obj.height}`}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
+                  dangerouslySetInnerHTML={{ __html: obj.svgOutline }}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -474,6 +483,8 @@ const MapEditor: React.FC<MapEditorProps> = ({
                           assignedNumber: p.assignedNumber,
                           numberOffsetX: p.numberOffsetX,
                           numberOffsetY: p.numberOffsetY,
+                          enableSvgOutline: p.enableSvgOutline,
+                          svgOutline: p.svgOutline,
                         };
                       }
                       return o;
