@@ -120,7 +120,7 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
 
   return (
     <div className="modal-overlay" onClick={onCancel}>
-      <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ width: '400px', maxWidth: '90vw' }}>
+      <div className="modal-content glass-panel" onClick={e => e.stopPropagation()} style={{ width: '400px', maxWidth: '90vw', maxHeight: '90vh', overflowY: 'auto' }}>
         <h2 style={{ marginBottom: '16px' }}>Edit Palette Object</h2>
         
         <div className="form-group">

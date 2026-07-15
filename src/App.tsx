@@ -43,6 +43,8 @@ function App() {
           if (p.assignedNumber != null) entry.assignedNumber = p.assignedNumber;
           if (p.numberOffsetX != null) entry.numberOffsetX = p.numberOffsetX;
           if (p.numberOffsetY != null) entry.numberOffsetY = p.numberOffsetY;
+          if (p.enableSvgOutline != null) entry.enableSvgOutline = p.enableSvgOutline;
+          if (p.svgOutline != null) entry.svgOutline = p.svgOutline;
         }
         return entry;
       });
@@ -102,7 +104,9 @@ function App() {
                   height: pObj.height,
                   assignedNumber: pObj.assignedNumber,
                   numberOffsetX: pObj.numberOffsetX,
-                  numberOffsetY: pObj.numberOffsetY
+                  numberOffsetY: pObj.numberOffsetY,
+                  enableSvgOutline: pObj.enableSvgOutline,
+                  svgOutline: pObj.svgOutline
                 };
               }
               return obj;

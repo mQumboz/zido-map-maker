@@ -430,6 +430,28 @@ const MapEditor: React.FC<MapEditorProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="dropdown-item" onClick={() => { setChangeObjectModal({ objectId: contextMenu.objectId }); setContextMenu(null); }}>Change...</div>
+          <div className="dropdown-item" onClick={() => {
+            const targetObj = mapObjects.find(o => o.id === contextMenu.objectId);
+            if (targetObj) {
+              const p = palette.find(p => p.id === targetObj.paletteObjectId);
+              if (p) {
+                setMapObjects(prev => prev.map(o => o.id === contextMenu.objectId ? {
+                  ...o,
+                  name: p.name,
+                  type: p.type,
+                  imageSrc: p.imageSrc,
+                  width: p.width,
+                  height: p.height,
+                  assignedNumber: p.assignedNumber,
+                  numberOffsetX: p.numberOffsetX,
+                  numberOffsetY: p.numberOffsetY,
+                  enableSvgOutline: p.enableSvgOutline,
+                  svgOutline: p.svgOutline,
+                } : o));
+              }
+            }
+            setContextMenu(null);
+          }}>Reload from Palette</div>
           <div style={{ height: '1px', background: 'var(--panel-border)', margin: '4px 0' }}></div>
           <div className="dropdown-item" onClick={() => {
             setMapObjects(prev => prev.map(o => o.id === contextMenu.objectId ? { ...o, zIndex: o.zIndex + 1 } : o));
