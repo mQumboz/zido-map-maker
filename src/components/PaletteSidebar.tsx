@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ChangeEvent } from 'react';
-import type { ObjectType, PaletteObject } from '../types';
+import type { ObjectType, PaletteObject, NumberVariant, MapObject } from '../types';
 import PaletteGrid from './PaletteGrid';
 import EditPaletteModal from './EditPaletteModal';
 import { prepareSvgForDisplay } from '../utils/scaleSvg';
@@ -17,6 +17,7 @@ interface PaletteSidebarProps {
   setMapHeight: React.Dispatch<React.SetStateAction<number>>;
   onScaleMap: (factor: number) => void;
   onDownloadPaletteZip?: () => void;
+  setMapObjects?: React.Dispatch<React.SetStateAction<MapObject[]>>;
 }
 
 const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
@@ -29,7 +30,8 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   mapHeight,
   setMapHeight,
   onScaleMap,
-  onDownloadPaletteZip
+  onDownloadPaletteZip,
+  setMapObjects
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -37,6 +39,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   const [newObjectType, setNewObjectType] = useState<ObjectType>('prop');
   const [hasNumber, setHasNumber] = useState(false);
   const [newObjectNumber, setNewObjectNumber] = useState<number>(1);
+  const [newNumberVariant, setNewNumberVariant] = useState<NumberVariant>('1x');
   const [newOffsetX, setNewOffsetX] = useState<number>(0);
   const [newOffsetY, setNewOffsetY] = useState<number>(0);
   const [enableSvgOutline, setEnableSvgOutline] = useState(false);
@@ -82,6 +85,9 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
       setImageSrc(dataUrl);
       const dims = await getImgDimensions(dataUrl);
       setImageDims(dims);
+      if (dims.w > 200) {
+        setNewNumberVariant('@2x');
+      }
       if (!newObjectName) {
         setNewObjectName(file.name.split('.')[0] || '');
       }
@@ -106,6 +112,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
 
     if (newObjectType === 'tile' && hasNumber) {
       newObj.assignedNumber = newObjectNumber;
+      newObj.numberVariant = newNumberVariant;
       newObj.numberOffsetX = newOffsetX;
       newObj.numberOffsetY = newOffsetY;
     }
@@ -123,6 +130,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
     setNewObjectName('');
     setHasNumber(false);
     setNewObjectNumber(1);
+    setNewNumberVariant('1x');
     setNewOffsetX(0);
     setNewOffsetY(0);
     setEnableSvgOutline(false);
@@ -151,6 +159,9 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
       setImageSrc(dataUrl);
       const dims = await getImgDimensions(dataUrl);
       setImageDims(dims);
+      if (dims.w > 200) {
+        setNewNumberVariant('@2x');
+      }
       if (!newObjectName) {
         setNewObjectName(file.name.split('.')[0] || '');
       }
@@ -265,6 +276,17 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
                 ))}
               </select>
             </div>
+            <div className="form-group">
+              <label>Number Variant</label>
+              <select 
+                className="input-field" 
+                value={newNumberVariant}
+                onChange={e => setNewNumberVariant(e.target.value as NumberVariant)}
+              >
+                <option value="1x">Standard (1x)</option>
+                <option value="@2x">@2x Variant</option>
+              </select>
+            </div>
             <div className="form-group" style={{ flexDirection: 'row', gap: '8px' }}>
               <div style={{ flex: 1 }}>
                 <label>Offset X (px)</label>
@@ -347,12 +369,18 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
                 position: 'relative',
                 width: imageDims.w,
                 height: imageDims.h,
-                transform: `scale(${Math.min(1, 130 / imageDims.w, 130 / imageDims.h)})`
+                transform: `scale(${Math.min(1, 130 / imageDims.w, 130 / imageDims.h)})`,
+                transformOrigin: 'center center'
               }}>
                  <img src={imageSrc} style={{ width: '100%', height: '100%', display: 'block' }} alt="Preview" />
-                 {newObjectType === 'tile' && hasNumber && (
-                   <img src={`/tilesmap/${newObjectNumber}.png`} style={{ position: 'absolute', top: newOffsetY, left: newOffsetX, width: 'auto', height: 'auto', pointerEvents: 'none', zIndex: 1, maxWidth: 'none', maxHeight: 'none' }} alt="Num" />
-                 )}
+                  {newObjectType === 'tile' && hasNumber && (
+                    <img 
+                      className="tile-number-overlay"
+                      src={`/tilesmap/${newObjectNumber}${(newNumberVariant === '@2x' || (!newNumberVariant && imageDims.w > 200)) ? '@2x' : ''}.png`} 
+                      style={{ top: `${Number(newOffsetY) || 0}px`, left: `${Number(newOffsetX) || 0}px` }} 
+                      alt="Num" 
+                    />
+                  )}
                   {newObjectType === 'tile' && enableSvgOutline && svgOutline && (
                     <div
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
@@ -452,6 +480,27 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
               newPalette[editItemModal] = updatedItem;
               return newPalette;
             });
+            if (setMapObjects) {
+              setMapObjects(prev => prev.map(obj => {
+                if (obj.paletteObjectId === updatedItem.id) {
+                  return {
+                    ...obj,
+                    name: updatedItem.name,
+                    type: updatedItem.type,
+                    imageSrc: updatedItem.imageSrc,
+                    width: updatedItem.width,
+                    height: updatedItem.height,
+                    assignedNumber: updatedItem.assignedNumber,
+                    numberVariant: updatedItem.numberVariant,
+                    numberOffsetX: updatedItem.numberOffsetX,
+                    numberOffsetY: updatedItem.numberOffsetY,
+                    enableSvgOutline: updatedItem.enableSvgOutline,
+                    svgOutline: updatedItem.svgOutline,
+                  };
+                }
+                return obj;
+              }));
+            }
             setEditItemModal(null);
           }}
           onCancel={() => setEditItemModal(null)}

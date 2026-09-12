@@ -211,7 +211,7 @@ input, select {
 /* Palette Grid */
 .palette-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -228,6 +228,8 @@ input, select {
   gap: 6px;
   aspect-ratio: 1; /* Make parent grid item a square */
   overflow: hidden; /* Prevent extending */
+  min-width: 0;
+  min-height: 0;
 }
 
 .palette-item:hover {
@@ -241,11 +243,11 @@ input, select {
   box-shadow: 0 0 0 1px var(--accent-color);
 }
 
-.palette-item img {
+.palette-item img:not(.tile-number-overlay) {
   width: 100%;
-  height: 60px;
+  height: 100%;
+  display: block;
   object-fit: contain;
-  border-radius: 6px;
 }
 
 .palette-item-name {
@@ -358,11 +360,25 @@ input, select {
   outline-offset: 2px;
 }
 
-.map-object img {
+.map-object img:not(.tile-number-overlay) {
   width: 100%;
   height: 100%;
   display: block;
   pointer-events: none; /* Let the wrapper handle generic events */
+}
+
+/* Number badge overlay */
+.tile-number-overlay {
+  position: absolute !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  object-fit: fill !important;
+  display: block !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
 }
 
 /* Object settings floating panel */

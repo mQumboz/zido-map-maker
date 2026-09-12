@@ -36,26 +36,48 @@ function App() {
     if (factor <= 0) return;
     setMapWidth(prev => Math.round(prev * factor));
     setMapHeight(prev => Math.round(prev * factor));
-    setMapObjects(prev => prev.map(obj => ({
-      ...obj,
-      x: Math.round(obj.x * factor),
-      y: Math.round(obj.y * factor),
-      width: Math.round(obj.width * factor),
-      height: Math.round(obj.height * factor),
-      numberOffsetX: obj.numberOffsetX !== undefined ? Math.round(obj.numberOffsetX * factor) : undefined,
-      numberOffsetY: obj.numberOffsetY !== undefined ? Math.round(obj.numberOffsetY * factor) : undefined,
-      numberScale: (obj.numberScale ?? 1) * factor,
-      svgOutline: obj.svgOutline ? scaleSvgString(obj.svgOutline, factor) : obj.svgOutline,
-    })));
-    setPalette(prev => prev.map(p => ({
-      ...p,
-      width: Math.round(p.width * factor),
-      height: Math.round(p.height * factor),
-      numberOffsetX: p.numberOffsetX !== undefined ? Math.round(p.numberOffsetX * factor) : undefined,
-      numberOffsetY: p.numberOffsetY !== undefined ? Math.round(p.numberOffsetY * factor) : undefined,
-      numberScale: (p.numberScale ?? 1) * factor,
-      svgOutline: p.svgOutline ? scaleSvgString(p.svgOutline, factor) : p.svgOutline,
-    })));
+    setMapObjects(prev => prev.map(obj => {
+      const newWidth = Math.round(obj.width * factor);
+      let newVariant = obj.numberVariant;
+      if (obj.type === 'tile' && obj.assignedNumber !== undefined) {
+        if (factor > 1 && newWidth > 200) {
+          newVariant = '@2x';
+        } else if (factor < 1 && newWidth <= 200) {
+          newVariant = '1x';
+        }
+      }
+      return {
+        ...obj,
+        x: Math.round(obj.x * factor),
+        y: Math.round(obj.y * factor),
+        width: newWidth,
+        height: Math.round(obj.height * factor),
+        numberOffsetX: obj.numberOffsetX !== undefined ? Math.round(obj.numberOffsetX * factor) : undefined,
+        numberOffsetY: obj.numberOffsetY !== undefined ? Math.round(obj.numberOffsetY * factor) : undefined,
+        numberVariant: newVariant,
+        svgOutline: obj.svgOutline ? scaleSvgString(obj.svgOutline, factor) : obj.svgOutline,
+      };
+    }));
+    setPalette(prev => prev.map(p => {
+      const newWidth = Math.round(p.width * factor);
+      let newVariant = p.numberVariant;
+      if (p.type === 'tile' && p.assignedNumber !== undefined) {
+        if (factor > 1 && newWidth > 200) {
+          newVariant = '@2x';
+        } else if (factor < 1 && newWidth <= 200) {
+          newVariant = '1x';
+        }
+      }
+      return {
+        ...p,
+        width: newWidth,
+        height: Math.round(p.height * factor),
+        numberOffsetX: p.numberOffsetX !== undefined ? Math.round(p.numberOffsetX * factor) : undefined,
+        numberOffsetY: p.numberOffsetY !== undefined ? Math.round(p.numberOffsetY * factor) : undefined,
+        numberVariant: newVariant,
+        svgOutline: p.svgOutline ? scaleSvgString(p.svgOutline, factor) : p.svgOutline,
+      };
+    }));
   }, []);
 
   // Expose JSON export function with scaling support (1x, 2x, etc.)
@@ -75,10 +97,13 @@ function App() {
         };
         // Tile-only fields — only include when present on tile palette items
         if (p.type === 'tile') {
-          if (p.assignedNumber != null) entry.assignedNumber = p.assignedNumber;
+          if (p.assignedNumber != null) {
+            entry.assignedNumber = p.assignedNumber;
+            const targetW = Math.round(p.width * validScale);
+            entry.numberVariant = (validScale > 1 && targetW > 200) ? '@2x' : (p.numberVariant ?? '1x');
+          }
           if (p.numberOffsetX != null) entry.numberOffsetX = Math.round(p.numberOffsetX * validScale);
           if (p.numberOffsetY != null) entry.numberOffsetY = Math.round(p.numberOffsetY * validScale);
-          if (p.numberScale != null || validScale !== 1) entry.numberScale = (p.numberScale ?? 1) * validScale;
           if (p.enableSvgOutline != null) entry.enableSvgOutline = p.enableSvgOutline;
           if (p.svgOutline != null) entry.svgOutline = validScale !== 1 ? scaleSvgString(p.svgOutline, validScale) : p.svgOutline;
         }
@@ -133,15 +158,16 @@ function App() {
             
             let currentPalette = palette;
             if (loaded.palette && Array.isArray(loaded.palette)) {
-              const existingIds = new Set(palette.map(p => p.id));
-              const newItems = loaded.palette.filter((p: PaletteObject) => p.id && !existingIds.has(p.id));
-              currentPalette = [...palette, ...newItems];
+              const loadedIds = new Set(loaded.palette.map((p: PaletteObject) => p.id));
+              const remainingOld = palette.filter(p => !loadedIds.has(p.id));
+              currentPalette = [...loaded.palette, ...remainingOld];
               setPalette(currentPalette);
             }
             
             const reconstructedObjects = loaded.objects.map((obj: { id: string; paletteObjectId: string; x: number; y: number; zIndex: number }) => {
               const pObj = currentPalette.find(p => p.id === obj.paletteObjectId);
               if (pObj) {
+                const variant = (obj as unknown as { numberVariant?: '1x' | '@2x' }).numberVariant ?? pObj.numberVariant ?? (pObj.width > 200 ? '@2x' : '1x');
                 return {
                   ...obj,
                   name: pObj.name,
@@ -150,9 +176,9 @@ function App() {
                   width: pObj.width,
                   height: pObj.height,
                   assignedNumber: pObj.assignedNumber,
-                  numberOffsetX: pObj.numberOffsetX,
-                  numberOffsetY: pObj.numberOffsetY,
-                  numberScale: pObj.numberScale ?? (obj as unknown as { numberScale?: number }).numberScale ?? 1,
+                  numberVariant: variant,
+                  numberOffsetX: pObj.numberOffsetX !== undefined ? Number(pObj.numberOffsetX) : undefined,
+                  numberOffsetY: pObj.numberOffsetY !== undefined ? Number(pObj.numberOffsetY) : undefined,
                   enableSvgOutline: pObj.enableSvgOutline,
                   svgOutline: pObj.svgOutline
                 };
@@ -277,6 +303,7 @@ function App() {
         <PaletteSidebar
           palette={palette}
           setPalette={setPalette}
+          setMapObjects={setMapObjects}
           activePaletteIndex={activePaletteIndex}
           setActivePaletteIndex={handlePaletteSelect}
           mapWidth={mapWidth}
@@ -293,6 +320,7 @@ function App() {
         mapObjects={mapObjects}
         setMapObjects={setMapObjects}
         palette={palette}
+        setPalette={setPalette}
         activePaletteObject={activePaletteIndex !== null ? palette[activePaletteIndex] : null}
         selectedObjectId={selectedObjectId}
         setSelectedObjectId={setSelectedObjectId}

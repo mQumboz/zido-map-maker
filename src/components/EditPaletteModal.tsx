@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
-import type { ObjectType, PaletteObject } from '../types';
+import type { ObjectType, PaletteObject, NumberVariant } from '../types';
 import { prepareSvgForDisplay } from '../utils/scaleSvg';
 
 interface EditPaletteModalProps {
@@ -16,6 +16,7 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
   const [objectType, setObjectType] = useState<ObjectType>(item.type);
   const [hasNumber, setHasNumber] = useState(item.assignedNumber !== undefined);
   const [objectNumber, setObjectNumber] = useState<number>(item.assignedNumber ?? 1);
+  const [numberVariant, setNumberVariant] = useState<NumberVariant>(item.numberVariant ?? (item.width > 200 ? '@2x' : '1x'));
   const [offsetX, setOffsetX] = useState<number>(item.numberOffsetX ?? 0);
   const [offsetY, setOffsetY] = useState<number>(item.numberOffsetY ?? 0);
   const [enableSvgOutline, setEnableSvgOutline] = useState(item.enableSvgOutline ?? false);
@@ -100,10 +101,12 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
 
     if (objectType === 'tile' && hasNumber) {
       updatedObj.assignedNumber = objectNumber;
+      updatedObj.numberVariant = numberVariant;
       updatedObj.numberOffsetX = offsetX;
       updatedObj.numberOffsetY = offsetY;
     } else {
       delete updatedObj.assignedNumber;
+      delete updatedObj.numberVariant;
       delete updatedObj.numberOffsetX;
       delete updatedObj.numberOffsetY;
     }
@@ -178,6 +181,17 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
                   <option key={n} value={n}>Number {n}</option>
                 ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Number Variant</label>
+              <select 
+                className="input-field" 
+                value={numberVariant}
+                onChange={e => setNumberVariant(e.target.value as NumberVariant)}
+              >
+                <option value="1x">Standard (1x)</option>
+                <option value="@2x">@2x Variant</option>
               </select>
             </div>
             <div className="form-group" style={{ flexDirection: 'row', gap: '8px' }}>
@@ -262,12 +276,18 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
                 position: 'relative',
                 width: imageDims.w,
                 height: imageDims.h,
-                transform: `scale(${Math.min(1, 130 / imageDims.w, 130 / imageDims.h)})`
+                transform: `scale(${Math.min(1, 130 / imageDims.w, 130 / imageDims.h)})`,
+                transformOrigin: 'center center'
               }}>
                  <img src={imageSrc} style={{ width: '100%', height: '100%', display: 'block' }} alt="Preview" />
-                 {objectType === 'tile' && hasNumber && (
-                   <img src={`/tilesmap/${objectNumber}.png`} style={{ position: 'absolute', top: offsetY, left: offsetX, width: 'auto', height: 'auto', pointerEvents: 'none', zIndex: 1, maxWidth: 'none', maxHeight: 'none' }} alt="Num" />
-                 )}
+                  {objectType === 'tile' && hasNumber && (
+                    <img 
+                      className="tile-number-overlay"
+                      src={`/tilesmap/${objectNumber}${(numberVariant === '@2x' || (!numberVariant && imageDims.w > 200)) ? '@2x' : ''}.png`} 
+                      style={{ top: `${Number(offsetY) || 0}px`, left: `${Number(offsetX) || 0}px` }} 
+                      alt="Num" 
+                    />
+                  )}
                   {objectType === 'tile' && enableSvgOutline && svgOutline && (
                     <div
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}

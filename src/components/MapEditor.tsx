@@ -17,6 +17,7 @@ interface MapEditorProps {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   activeTool: EditorTool;
   setActiveTool: React.Dispatch<React.SetStateAction<EditorTool>>;
+  setPalette?: React.Dispatch<React.SetStateAction<PaletteObject[]>>;
 }
 
 const MapEditor: React.FC<MapEditorProps> = ({
@@ -25,6 +26,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
   mapObjects,
   setMapObjects,
   palette,
+  setPalette,
   activePaletteObject,
   selectedObjectId,
   setSelectedObjectId,
@@ -86,6 +88,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
             type: activePaletteObject.type,
             imageSrc: activePaletteObject.imageSrc,
             assignedNumber: activePaletteObject.assignedNumber,
+            numberVariant: activePaletteObject.numberVariant,
             numberOffsetX: activePaletteObject.numberOffsetX,
             numberOffsetY: activePaletteObject.numberOffsetY,
             numberScale: activePaletteObject.numberScale ?? 1,
@@ -323,23 +326,15 @@ const MapEditor: React.FC<MapEditorProps> = ({
             >
               <img src={obj.imageSrc} alt={obj.name} style={{ width: '100%', height: '100%', display: 'block' }} />
               {obj.type === 'tile' && obj.assignedNumber !== undefined && (
-                 <img
-                   src={`/tilesmap/${obj.assignedNumber}.png`}
-                   alt={`Number`}
-                   style={{
-                     position: 'absolute',
-                     top: obj.numberOffsetY || 0,
-                     left: obj.numberOffsetX || 0,
-                     width: 'auto',
-                     height: 'auto',
-                     transform: `scale(${obj.numberScale ?? 1})`,
-                     transformOrigin: 'top left',
-                     zIndex: 1,
-                     pointerEvents: 'none',
-                     maxWidth: 'none',
-                     maxHeight: 'none'
-                   }}
-                 />
+                <img
+                  className="tile-number-overlay"
+                  src={`/tilesmap/${obj.assignedNumber}${(obj.numberVariant === '@2x' || (!obj.numberVariant && obj.width > 200)) ? '@2x' : ''}.png`}
+                  alt="Number"
+                  style={{
+                    top: `${Number(obj.numberOffsetY) || 0}px`,
+                    left: `${Number(obj.numberOffsetX) || 0}px`,
+                  }}
+                />
               )}
               {obj.type === 'tile' && obj.enableSvgOutline && obj.svgOutline && (
                 <div
@@ -426,6 +421,49 @@ const MapEditor: React.FC<MapEditorProps> = ({
             X: {selectedObjDetails.x}px <br />
             Y: {selectedObjDetails.y}px
           </div>
+
+          {selectedObjDetails.type === 'tile' && selectedObjDetails.assignedNumber !== undefined && (
+            <>
+              <hr style={{ borderColor: 'var(--panel-border)', margin: '12px 0' }} />
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                Number Overlay (Tile {selectedObjDetails.assignedNumber} {selectedObjDetails.numberVariant ?? '1x'})
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Offset X (px)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    value={selectedObjDetails.numberOffsetX ?? 0}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setMapObjects(prev => prev.map(o => o.id === selectedObjDetails.id ? { ...o, numberOffsetX: val } : o));
+                      if (setPalette && selectedObjDetails.paletteObjectId) {
+                        setPalette(prev => prev.map(p => p.id === selectedObjDetails.paletteObjectId ? { ...p, numberOffsetX: val } : p));
+                      }
+                    }}
+                    style={{ width: '100%', padding: '4px 6px', fontSize: '0.8rem' }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Offset Y (px)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    value={selectedObjDetails.numberOffsetY ?? 0}
+                    onChange={e => {
+                      const val = Number(e.target.value);
+                      setMapObjects(prev => prev.map(o => o.id === selectedObjDetails.id ? { ...o, numberOffsetY: val } : o));
+                      if (setPalette && selectedObjDetails.paletteObjectId) {
+                        setPalette(prev => prev.map(p => p.id === selectedObjDetails.paletteObjectId ? { ...p, numberOffsetY: val } : p));
+                      }
+                    }}
+                    style={{ width: '100%', padding: '4px 6px', fontSize: '0.8rem' }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -460,6 +498,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
                   width: p.width,
                   height: p.height,
                   assignedNumber: p.assignedNumber,
+                  numberVariant: p.numberVariant,
                   numberOffsetX: p.numberOffsetX,
                   numberOffsetY: p.numberOffsetY,
                   numberScale: p.numberScale ?? 1,
@@ -521,6 +560,7 @@ const MapEditor: React.FC<MapEditorProps> = ({
                           width: p.width,
                           height: p.height,
                           assignedNumber: p.assignedNumber,
+                          numberVariant: p.numberVariant,
                           numberOffsetX: p.numberOffsetX,
                           numberOffsetY: p.numberOffsetY,
                           numberScale: p.numberScale ?? 1,

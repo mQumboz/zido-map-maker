@@ -25,24 +25,23 @@ const PaletteGrid: React.FC<PaletteGridProps> = ({
           onContextMenu={(e) => onContextMenu && onContextMenu(e, item, index)}
         >
           <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '50%', left: '50%', width: item.width || 64, height: item.height || 64, transform: `translate(-50%, -50%) scale(${Math.min(64 / (item.width || 64), 64 / (item.height || 64))})` }}>
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: item.width || 64,
+              height: item.height || 64,
+              transform: `translate(-50%, -50%) scale(${Math.min(60 / (item.width || 64), 60 / (item.height || 64))})`
+            }}>
               <img src={item.imageSrc} alt={item.name} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }} />
               {item.type === 'tile' && item.assignedNumber !== undefined && (
                 <img
-                  src={`/tilesmap/${item.assignedNumber}.png`}
+                  className="tile-number-overlay"
+                  src={`/tilesmap/${item.assignedNumber}${(item.numberVariant === '@2x' || (!item.numberVariant && (item.width || 64) > 200)) ? '@2x' : ''}.png`}
                   alt={`Number ${item.assignedNumber}`}
                   style={{
-                    position: 'absolute',
-                    top: item.numberOffsetY || 0,
-                    left: item.numberOffsetX || 0,
-                    width: 'auto',
-                    height: 'auto',
-                    transform: `scale(${item.numberScale ?? 1})`,
-                    transformOrigin: 'top left',
-                    zIndex: 1,
-                    pointerEvents: 'none',
-                    maxWidth: 'none',
-                    maxHeight: 'none'
+                    top: `${Number(item.numberOffsetY) || 0}px`,
+                    left: `${Number(item.numberOffsetX) || 0}px`,
                   }}
                 />
               )}

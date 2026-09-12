@@ -1,5 +1,6 @@
 export type ObjectType = 'background' | 'prop' | 'tile';
 export type EditorTool = 'select' | 'place' | 'pan';
+export type NumberVariant = '1x' | '@2x';
 
 export interface PaletteObject {
   id: string;
@@ -9,6 +10,7 @@ export interface PaletteObject {
   width: number;
   height: number;
   assignedNumber?: number;
+  numberVariant?: NumberVariant;
   numberOffsetX?: number;
   numberOffsetY?: number;
   numberScale?: number;
@@ -26,6 +28,7 @@ export interface MapObject {
   width: number;
   height: number;
   assignedNumber?: number;
+  numberVariant?: NumberVariant;
   numberOffsetX?: number;
   numberOffsetY?: number;
   numberScale?: number;

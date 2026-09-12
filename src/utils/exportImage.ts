@@ -58,12 +58,14 @@ export async function exportMapAsImage(
     // 2. Draw tile number badge if assigned, scaled proportionally
     if (obj.type === 'tile' && obj.assignedNumber !== undefined) {
       try {
-        const numImg = await loadImage(`/tilesmap/${obj.assignedNumber}.png`);
-        const effectiveNumberScale = (obj.numberScale ?? 1) * scale;
+        const targetObjWidth = Math.round(obj.width * scale);
+        const is2x = obj.numberVariant === '@2x' || (!obj.numberVariant && obj.width > 200) || (scale > 1 && targetObjWidth > 200);
+        const variantSuffix = is2x ? '@2x' : '';
+        const numImg = await loadImage(`/tilesmap/${obj.assignedNumber}${variantSuffix}.png`);
         const posX = Math.round((obj.x + (obj.numberOffsetX || 0)) * scale);
         const posY = Math.round((obj.y + (obj.numberOffsetY || 0)) * scale);
-        const numWidth = Math.round(numImg.naturalWidth * effectiveNumberScale);
-        const numHeight = Math.round(numImg.naturalHeight * effectiveNumberScale);
+        const numWidth = Math.round(numImg.naturalWidth * scale);
+        const numHeight = Math.round(numImg.naturalHeight * scale);
 
         ctx.drawImage(numImg, posX, posY, numWidth, numHeight);
       } catch (err) {
