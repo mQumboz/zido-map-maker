@@ -4,6 +4,7 @@ import type { PaletteObject, MapObject, EditorTool } from './types';
 import PaletteSidebar from './components/PaletteSidebar';
 import MapEditor from './components/MapEditor';
 import TopMenu from './components/TopMenu';
+import BulkReplaceModal, { type BulkReplacement } from './components/BulkReplaceModal';
 
 import { exportMapAsImage } from './utils/exportImage';
 import { scaleSvgString } from './utils/scaleSvg';
@@ -19,6 +20,8 @@ function App() {
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [activeTool, setActiveTool] = useState<EditorTool>('select');
+  const [bulkReplaceOpen, setBulkReplaceOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Change tool to place if an active palette object is selected
   const handlePaletteSelect = (index: number | null) => {
@@ -214,6 +217,49 @@ function App() {
     setPalette([]);
   }, []);
 
+  const handleBulkReplacePalette = useCallback((
+    replacements: BulkReplacement[],
+    updateMapElements: boolean,
+    updateDimensions: boolean
+  ) => {
+    const repMap = new Map(replacements.map(r => [r.paletteId, r]));
+
+    // 1. Replace palette items' png content (and dimensions if opted in)
+    setPalette(prevPalette => prevPalette.map(item => {
+      const rep = repMap.get(item.id);
+      if (!rep) return item;
+      return {
+        ...item,
+        imageSrc: rep.imageSrc,
+        ...(updateDimensions ? { width: rep.width, height: rep.height } : {})
+      };
+    }));
+
+    // 2. Update map elements if user checked the checkbox
+    let updatedMapCount = 0;
+    if (updateMapElements) {
+      setMapObjects(prevObjects => prevObjects.map(obj => {
+        const rep = repMap.get(obj.paletteObjectId);
+        if (!rep) return obj;
+        updatedMapCount++;
+        return {
+          ...obj,
+          imageSrc: rep.imageSrc,
+          ...(updateDimensions ? { width: rep.width, height: rep.height } : {})
+        };
+      }));
+    }
+
+    setBulkReplaceOpen(false);
+
+    // Show feedback toast
+    const msg = updateMapElements
+      ? `Replaced PNG for ${replacements.length} palette item${replacements.length === 1 ? '' : 's'}${updatedMapCount > 0 ? ` and updated ${updatedMapCount} map element${updatedMapCount === 1 ? '' : 's'}` : ''}.`
+      : `Replaced PNG for ${replacements.length} palette item${replacements.length === 1 ? '' : 's'}.`;
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  }, []);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden' }}>
       <TopMenu
@@ -225,6 +271,7 @@ function App() {
         onExportPalette={handleSavePalette}
         onDownloadPaletteZip={handleDownloadPaletteZip}
         onEmptyPalette={handleEmptyPalette}
+        onOpenBulkReplace={() => setBulkReplaceOpen(true)}
       />
       <div className="app-container" style={{ flex: 1, minHeight: 0, height: 'auto' }}>
         <PaletteSidebar
@@ -255,6 +302,41 @@ function App() {
         setActiveTool={setActiveTool}
       />
       </div>
+
+      {bulkReplaceOpen && (
+        <BulkReplaceModal
+          palette={palette}
+          mapElementsCount={mapObjects.length}
+          onApply={handleBulkReplacePalette}
+          onCancel={() => setBulkReplaceOpen(false)}
+        />
+      )}
+
+      {toastMessage && (
+        <div
+          className="glass-panel"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            background: 'rgba(16, 185, 129, 0.95)',
+            color: '#fff',
+            fontWeight: 500,
+            fontSize: '0.88rem',
+            zIndex: 3000,
+            boxShadow: 'var(--shadow-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            pointerEvents: 'none'
+          }}
+        >
+          <span>✓</span>
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </div>
   );
 }
