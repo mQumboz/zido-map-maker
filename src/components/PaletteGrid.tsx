@@ -1,5 +1,6 @@
 import React from 'react';
 import type { PaletteObject } from '../types';
+import { prepareSvgForDisplay } from '../utils/scaleSvg';
 
 interface PaletteGridProps {
   palette: PaletteObject[];
@@ -27,13 +28,28 @@ const PaletteGrid: React.FC<PaletteGridProps> = ({
             <div style={{ position: 'absolute', top: '50%', left: '50%', width: item.width || 64, height: item.height || 64, transform: `translate(-50%, -50%) scale(${Math.min(64 / (item.width || 64), 64 / (item.height || 64))})` }}>
               <img src={item.imageSrc} alt={item.name} style={{ width: '100%', height: '100%', display: 'block', objectFit: 'contain' }} />
               {item.type === 'tile' && item.assignedNumber !== undefined && (
-                <img src={`/tilesmap/${item.assignedNumber}.png`} alt={`Number ${item.assignedNumber}`} style={{ position: 'absolute', top: item.numberOffsetY || 0, left: item.numberOffsetX || 0, width: 'auto', height: 'auto', zIndex: 1, pointerEvents: 'none', maxWidth: 'none', maxHeight: 'none' }} />
+                <img
+                  src={`/tilesmap/${item.assignedNumber}.png`}
+                  alt={`Number ${item.assignedNumber}`}
+                  style={{
+                    position: 'absolute',
+                    top: item.numberOffsetY || 0,
+                    left: item.numberOffsetX || 0,
+                    width: 'auto',
+                    height: 'auto',
+                    transform: `scale(${item.numberScale ?? 1})`,
+                    transformOrigin: 'top left',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                    maxWidth: 'none',
+                    maxHeight: 'none'
+                  }}
+                />
               )}
               {item.type === 'tile' && item.enableSvgOutline && item.svgOutline && (
-                <svg
-                  viewBox={`0 0 ${item.width || 64} ${item.height || 64}`}
+                <div
                   style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
-                  dangerouslySetInnerHTML={{ __html: item.svgOutline }}
+                  dangerouslySetInnerHTML={{ __html: prepareSvgForDisplay(item.svgOutline, item.width || 64, item.height || 64) }}
                 />
               )}
             </div>

@@ -11,6 +11,7 @@ export interface PaletteObject {
   assignedNumber?: number;
   numberOffsetX?: number;
   numberOffsetY?: number;
+  numberScale?: number;
   enableSvgOutline?: boolean;
   svgOutline?: string;
 }
@@ -27,6 +28,7 @@ export interface MapObject {
   assignedNumber?: number;
   numberOffsetX?: number;
   numberOffsetY?: number;
+  numberScale?: number;
   enableSvgOutline?: boolean;
   svgOutline?: string;
   

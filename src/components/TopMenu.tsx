@@ -3,9 +3,11 @@ import React, { useRef, useState } from 'react';
 interface TopMenuProps {
   onNewMap: () => void;
   onImportMap: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onExportMap: () => void;
+  onExportMap: (scale?: number) => void;
+  onExportImage: (scale?: number) => void;
   onImportPalette: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onExportPalette: () => void;
+  onDownloadPaletteZip: () => void;
   onEmptyPalette: () => void;
 }
 
@@ -13,8 +15,10 @@ const TopMenu: React.FC<TopMenuProps> = ({
   onNewMap,
   onImportMap,
   onExportMap,
+  onExportImage,
   onImportPalette,
   onExportPalette,
+  onDownloadPaletteZip,
   onEmptyPalette
 }) => {
   const mapFileRef = useRef<HTMLInputElement>(null);
@@ -39,13 +43,18 @@ const TopMenu: React.FC<TopMenuProps> = ({
           File
         </div>
         {menuOpen && (
-          <div className="dropdown glass-panel" style={{ position: 'absolute', top: '100%', left: 0, minWidth: '200px', display: 'flex', flexDirection: 'column', padding: '8px 0', zIndex: 200, marginTop: '2px', backgroundColor: 'black' }}>
+          <div className="dropdown glass-panel" style={{ position: 'absolute', top: '100%', left: 0, minWidth: '220px', display: 'flex', flexDirection: 'column', padding: '8px 0', zIndex: 200, marginTop: '2px', backgroundColor: 'black' }}>
             <div className="dropdown-item" onClick={() => { onNewMap(); setMenuOpen(false); }}>New Map</div>
             <div className="dropdown-item" onClick={() => { mapFileRef.current?.click(); setMenuOpen(false); }}>Import Map</div>
-            <div className="dropdown-item" onClick={() => { onExportMap(); setMenuOpen(false); }}>Export Map</div>
+            <div className="dropdown-item" onClick={() => { onExportMap(1); setMenuOpen(false); }}>Export Map (JSON)</div>
+            <div className="dropdown-item" onClick={() => { onExportMap(2); setMenuOpen(false); }}>Export Map 2x (JSON)</div>
+            <hr style={{ borderColor: 'var(--panel-border)', margin: '4px 0' }} />
+            <div className="dropdown-item" onClick={() => { onExportImage(1); setMenuOpen(false); }}>Export Image (PNG)</div>
+            <div className="dropdown-item" onClick={() => { onExportImage(2); setMenuOpen(false); }}>Export Image 2x (PNG)</div>
             <hr style={{ borderColor: 'var(--panel-border)', margin: '4px 0' }} />
             <div className="dropdown-item" onClick={() => { paletteFileRef.current?.click(); setMenuOpen(false); }}>Import Palette</div>
-            <div className="dropdown-item" onClick={() => { onExportPalette(); setMenuOpen(false); }}>Export Palette</div>
+            <div className="dropdown-item" onClick={() => { onExportPalette(); setMenuOpen(false); }}>Export Palette (JSON)</div>
+            <div className="dropdown-item" onClick={() => { onDownloadPaletteZip(); setMenuOpen(false); }}>Download Palette as PNG (ZIP)</div>
             <div className="dropdown-item" onClick={() => { onEmptyPalette(); setMenuOpen(false); }}>Empty Palette</div>
           </div>
         )}

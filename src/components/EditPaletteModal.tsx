@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import type { ObjectType, PaletteObject } from '../types';
+import { prepareSvgForDisplay } from '../utils/scaleSvg';
 
 interface EditPaletteModalProps {
   item: PaletteObject;
@@ -267,13 +268,12 @@ const EditPaletteModal: React.FC<EditPaletteModalProps> = ({ item, onSave, onCan
                  {objectType === 'tile' && hasNumber && (
                    <img src={`/tilesmap/${objectNumber}.png`} style={{ position: 'absolute', top: offsetY, left: offsetX, width: 'auto', height: 'auto', pointerEvents: 'none', zIndex: 1, maxWidth: 'none', maxHeight: 'none' }} alt="Num" />
                  )}
-                 {objectType === 'tile' && enableSvgOutline && svgOutline && (
-                   <svg
-                     viewBox={`0 0 ${imageDims.w} ${imageDims.h}`}
-                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
-                     dangerouslySetInnerHTML={{ __html: svgOutline }}
-                   />
-                 )}
+                  {objectType === 'tile' && enableSvgOutline && svgOutline && (
+                    <div
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
+                      dangerouslySetInnerHTML={{ __html: prepareSvgForDisplay(svgOutline, imageDims.w, imageDims.h) }}
+                    />
+                  )}
               </div>
             </div>
           </div>

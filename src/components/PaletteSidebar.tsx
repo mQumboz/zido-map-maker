@@ -4,6 +4,7 @@ import type { ChangeEvent } from 'react';
 import type { ObjectType, PaletteObject } from '../types';
 import PaletteGrid from './PaletteGrid';
 import EditPaletteModal from './EditPaletteModal';
+import { prepareSvgForDisplay } from '../utils/scaleSvg';
 
 interface PaletteSidebarProps {
   palette: PaletteObject[];
@@ -14,6 +15,8 @@ interface PaletteSidebarProps {
   setMapWidth: React.Dispatch<React.SetStateAction<number>>;
   mapHeight: number;
   setMapHeight: React.Dispatch<React.SetStateAction<number>>;
+  onScaleMap: (factor: number) => void;
+  onDownloadPaletteZip?: () => void;
 }
 
 const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
@@ -24,7 +27,9 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
   mapWidth,
   setMapWidth,
   mapHeight,
-  setMapHeight
+  setMapHeight,
+  onScaleMap,
+  onDownloadPaletteZip
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -91,7 +96,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
     if (newObjectType === 'tile' && hasNumber && newObjectNumber === 0) return;
 
     const newObj: PaletteObject = {
-      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      id: crypto.randomUUID(),
       name: newObjectName || 'Unknown',
       type: newObjectType,
       imageSrc: imageSrc,
@@ -156,7 +161,7 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
     <div className="sidebar glass-panel">
       <div>
         <h2>Map Dimensions</h2>
-        <div className="form-group" style={{ flexDirection: 'row', gap: '12px', marginBottom: 0 }}>
+        <div className="form-group" style={{ flexDirection: 'row', gap: '12px', marginBottom: '8px' }}>
           <div style={{ flex: 1 }}>
             <label>Width (px)</label>
             <input 
@@ -177,6 +182,26 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
               style={{ width: '100%' }}
             />
           </div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            type="button" 
+            className="btn-secondary" 
+            style={{ flex: 1, padding: '6px 8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+            onClick={() => onScaleMap(2)}
+            title="Double the map size and scale all placed objects and palette items"
+          >
+            <span>⬆️</span> Upscale 2x
+          </button>
+          <button 
+            type="button" 
+            className="btn-secondary" 
+            style={{ flex: 1, padding: '6px 8px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+            onClick={() => onScaleMap(0.5)}
+            title="Halve the map size and scale down all placed objects and palette items"
+          >
+            <span>⬇️</span> Downscale 0.5x
+          </button>
         </div>
       </div>
 
@@ -328,13 +353,12 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
                  {newObjectType === 'tile' && hasNumber && (
                    <img src={`/tilesmap/${newObjectNumber}.png`} style={{ position: 'absolute', top: newOffsetY, left: newOffsetX, width: 'auto', height: 'auto', pointerEvents: 'none', zIndex: 1, maxWidth: 'none', maxHeight: 'none' }} alt="Num" />
                  )}
-                 {newObjectType === 'tile' && enableSvgOutline && svgOutline && (
-                   <svg
-                     viewBox={`0 0 ${imageDims.w} ${imageDims.h}`}
-                     style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
-                     dangerouslySetInnerHTML={{ __html: svgOutline }}
-                   />
-                 )}
+                  {newObjectType === 'tile' && enableSvgOutline && svgOutline && (
+                    <div
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 2 }}
+                      dangerouslySetInnerHTML={{ __html: prepareSvgForDisplay(svgOutline, imageDims.w, imageDims.h) }}
+                    />
+                  )}
               </div>
             </div>
           </div>
@@ -355,6 +379,17 @@ const PaletteSidebar: React.FC<PaletteSidebarProps> = ({
       <div style={{ marginTop: '12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h2 style={{ margin: 0 }}>Palette Library</h2>
+          {palette.length > 0 && onDownloadPaletteZip && (
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ width: 'auto', padding: '4px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+              onClick={onDownloadPaletteZip}
+              title="Download all palette items as PNG files in a ZIP archive"
+            >
+              <span>📦</span> ZIP PNGs
+            </button>
+          )}
         </div>
         {palette.length === 0 ? (
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', textAlign: 'center', marginTop: '20px' }}>
